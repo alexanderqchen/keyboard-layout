@@ -33,6 +33,10 @@ export default function RootLayout({
         property="og:description"
         content="Try QWERTY, Dvorak, and Colemak alt keyboard layouts. Seamlessly switch between the layouts and practice typing on dummy text."
       />
+      <meta property="og:image" content="<generated>" />
+      <meta property="og:image:type" content="<generated>" />
+      <meta property="og:image:width" content="<generated>" />
+      <meta property="og:image:height" content="<generated>" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -48,6 +52,10 @@ export default function RootLayout({
         name="twitter:description"
         content="Try QWERTY, Dvorak, and Colemak alt keyboard layouts. Seamlessly switch between the layouts and practice typing on dummy text."
       />
+      <meta name="twitter:image" content="<generated>" />
+      <meta name="twitter:image:type" content="<generated>" />
+      <meta name="twitter:image:width" content="<generated>" />
+      <meta name="twitter:image:height" content="<generated>" />
 
       <Script
         src="https://www.googletagmanager.com/gtag/js?id=G-3XWS80C1HX"
