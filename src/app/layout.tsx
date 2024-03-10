@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Keyboard Layout Tester",
   description:
     "Try QWERTY, Dvorak, and Colemak alt keyboard layouts. Seamlessly switch between the layouts and practice typing on dummy text.",
+  metadataBase: new URL("https://keyboard.experimental.software/"),
 };
 
 export default function RootLayout({
