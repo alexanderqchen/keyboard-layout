@@ -263,7 +263,7 @@ const App = () => {
     <div>
       <MobileBanner />
       <div
-        className="p-12 w-screen h-screen max-w-6xl m-auto outline-none"
+        className="p-12 pt-20 w-screen h-screen max-w-6xl m-auto outline-none flex flex-col"
         autoFocus
         tabIndex={0}
         onKeyDown={handleKeyDown}
@@ -312,12 +312,25 @@ const App = () => {
             handleNewLine={handleNewLine}
           />
         </div>
-        <div className="w-full flex justify-center mb-4">
+        <div className="w-full flex justify-center mb-12">
           <Keyboard
             pressedKeys={pressedKeys}
             keyMap={keyMap}
             hintKey={getHintKey()}
           />
+        </div>
+
+        <div className="text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
+          <p>
+            Designed & Built by{" "}
+            <a
+              href="https://experimental.software/"
+              target="_blank"
+              className="underline"
+            >
+              Experimental Software
+            </a>
+          </p>
         </div>
       </div>
     </div>
