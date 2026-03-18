@@ -7,10 +7,14 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Keyboard Layout Tester",
+  title: "Dvorak & Colemak Keyboard Tester | Try Alternative Layouts Online",
   description:
-    "Try QWERTY, Dvorak, and Colemak alt keyboard layouts. Seamlessly switch between the layouts and practice typing on dummy text.",
+    "Test Dvorak, Colemak, and QWERTY keyboard layouts side by side. Type on any layout instantly in your browser — no software to install. Switch layouts with one click and practice typing on real text.",
   metadataBase: new URL("https://keyboard.experimental.software/"),
+  applicationName: "Keyboard Layout Tester",
+  other: {
+    "google": "nositelinkssearchbox",
+  },
 };
 
 export default function RootLayout({
@@ -22,17 +26,18 @@ export default function RootLayout({
     <html lang="en">
       {/* Open Graph / Facebook */}
       <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="Keyboard Layout Tester" />
       <meta
         property="og:url"
         content="https://keyboard.experimental.software/"
       />
       <meta
         property="og:title"
-        content="Practice Typing with Alt Keyboard Layouts"
+        content="Dvorak & Colemak Keyboard Tester | Try Alternative Layouts Online"
       />
       <meta
         property="og:description"
-        content="Try QWERTY, Dvorak, and Colemak alt keyboard layouts. Seamlessly switch between the layouts and practice typing on dummy text."
+        content="Test Dvorak, Colemak, and QWERTY keyboard layouts side by side. Type on any layout instantly in your browser — no software to install."
       />
 
       {/* Twitter */}
@@ -43,13 +48,24 @@ export default function RootLayout({
       />
       <meta
         name="twitter:title"
-        content="Practice Typing with Alt Keyboard Layouts"
+        content="Dvorak & Colemak Keyboard Tester | Try Alternative Layouts Online"
       />
       <meta
         name="twitter:description"
-        content="Try QWERTY, Dvorak, and Colemak alt keyboard layouts. Seamlessly switch between the layouts and practice typing on dummy text."
+        content="Test Dvorak, Colemak, and QWERTY keyboard layouts side by side. Type on any layout instantly in your browser — no software to install."
       />
 
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Keyboard Layout Tester",
+            "url": "https://keyboard.experimental.software/"
+          })
+        }}
+      />
       <Script
         src="https://www.googletagmanager.com/gtag/js?id=G-3XWS80C1HX"
         strategy="afterInteractive"
