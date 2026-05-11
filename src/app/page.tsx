@@ -320,8 +320,19 @@ const App = () => {
           />
         </div>
 
-        <div className="text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
-          <p>
+        <div className="text-gray-400 dark:text-gray-600 grow flex flex-col items-start justify-end gap-2 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+          <p className="text-left">
+            Learning Chinese too? Try{" "}
+            <a
+              href="https://typechinese.io/"
+              target="_blank"
+              className="underline"
+            >
+              TypeChinese
+            </a>{" "}
+            for Chinese typing practice.
+          </p>
+          <p className="text-left lg:text-right">
             Designed & Built by{" "}
             <a
               href="https://experimental.software/"
