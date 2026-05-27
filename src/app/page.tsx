@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import Keyboard from "@/components/Keyboard";
 import KeyboardOption from "@/components/KeyboardOption";
@@ -28,6 +28,8 @@ const KeyMap = {
 };
 
 const App = () => {
+  const appRef = useRef<HTMLDivElement>(null);
+
   // Keyboard configuration
   const [keyboardLayout, setKeyboardLayout] = useState(KeyboardLayout.QWERTY);
   const keyMap = KeyMap[keyboardLayout] as any;
@@ -53,6 +55,10 @@ const App = () => {
 
   // Store if should show hints
   const [showHints, setShowHints] = useState(false);
+
+  useEffect(() => {
+    appRef.current?.focus();
+  }, []);
 
   const getHintKey = () => {
     if (!showHints) {
@@ -263,8 +269,8 @@ const App = () => {
     <div>
       <MobileBanner />
       <div
+        ref={appRef}
         className="p-12 pt-20 w-screen h-screen max-w-6xl m-auto outline-none flex flex-col"
-        autoFocus
         tabIndex={0}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
