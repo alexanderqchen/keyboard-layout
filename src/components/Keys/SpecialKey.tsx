@@ -26,7 +26,7 @@ const SpecialKey = ({
     <div
       className={`keyboard-special-key keyboard-special-key--${
         size || "standard"
-      } shrink-0 grow-0 ${
+      } ${Icon ? "keyboard-special-key--has-icon" : ""} shrink-0 grow-0 ${
         highlight
           ? "bg-slate-600 dark:bg-gray-500 text-white dark:text-black border-0"
           : hint
@@ -35,14 +35,14 @@ const SpecialKey = ({
       }`}
     >
       <div
-        className={`h-1/2 flex items-start ${
+        className={`keyboard-special-key-icon h-1/2 flex items-start ${
           position === TextPosition.RIGHT ? "" : "justify-end"
         }`}
       >
         {Icon ? <Icon /> : ""}
       </div>
       <div
-        className={`h-1/2 flex items-end ${
+        className={`keyboard-special-key-label h-1/2 flex items-end ${
           position === TextPosition.RIGHT ? "justify-end" : ""
         }`}
       >

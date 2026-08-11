@@ -26,12 +26,12 @@ body {
 .keyboard {
   --keyboard-key-size: 6.2015504cqw;
   --keyboard-gap: 0.7751938cqw;
-  --keyboard-padding: 0.7751938cqw;
-  --keyboard-radius: 0.5813953cqw;
-  --keyboard-text: 1.9379845cqw;
-  --keyboard-shift-text: 1.3565891cqw;
-  --keyboard-special-text: 1.2403101cqw;
-  --keyboard-arrow-text: 1.1627907cqw;
+  --keyboard-padding: clamp(0.125rem, 0.7751938cqw, 0.5rem);
+  --keyboard-radius: clamp(0.2rem, 0.5813953cqw, 0.375rem);
+  --keyboard-text: clamp(0.65rem, 1.9379845cqw, 1.25rem);
+  --keyboard-shift-text: clamp(0.5rem, 1.3565891cqw, 0.875rem);
+  --keyboard-special-text: clamp(0.4rem, 1.2403101cqw, 0.8rem);
+  --keyboard-arrow-text: clamp(0.5rem, 1.1627907cqw, 0.75rem);
 
   gap: var(--keyboard-gap);
   width: 100cqw;
@@ -91,6 +91,18 @@ body {
 
 .keyboard-split-key {
   font-size: var(--keyboard-arrow-text);
+}
+
+@container (max-width: 30rem) {
+  .keyboard-special-key--has-icon .keyboard-special-key-icon {
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .keyboard-special-key--has-icon .keyboard-special-key-label {
+    display: none;
+  }
 }
 
 @layer utilities {
