@@ -61,7 +61,7 @@ const TypeTest = ({
   }, [ref.current?.offsetTop]);
 
   return (
-    <p className="h-[3.75rem] text-lg leading-relaxed tracking-tighter overflow-hidden select-none dark:text-gray-300 min-[500px]:h-[4.5rem] min-[500px]:text-xl md:h-[5rem] md:text-2xl">
+    <p className="h-[2lh] text-lg leading-relaxed tracking-tighter overflow-hidden select-none dark:text-gray-300 min-[500px]:text-xl md:text-2xl">
       <span>
         {finishedText.split("").map((letter, index) => (
           <Letter key={`${letter}-${index}`}>{letter}</Letter>
