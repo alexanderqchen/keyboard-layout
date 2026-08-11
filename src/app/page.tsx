@@ -270,14 +270,14 @@ const App = () => {
       <MobileBanner />
       <div
         ref={appRef}
-        className="p-12 pt-20 w-screen h-screen max-w-6xl m-auto outline-none flex flex-col"
+        className="w-full min-h-screen max-w-6xl mx-auto px-4 pt-8 pb-6 sm:px-8 sm:pt-12 sm:pb-8 md:px-12 md:pt-20 md:pb-12 outline-none flex flex-col"
         tabIndex={0}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
         onBlur={() => resetKeys()}
       >
-        <div className="mb-4 flex items-start gap-8">
-          <div className="flex gap-4 mb-4 shrink">
+        <div className="mb-4 flex items-start gap-3 sm:gap-6 md:gap-8">
+          <div className="flex min-w-0 flex-1 gap-2 mb-4 sm:gap-4">
             <KeyboardOption
               name="QWERTY"
               description="The standard format. Designed to minimize typewriter jams."
@@ -297,12 +297,14 @@ const App = () => {
               onClick={() => setKeyboardLayout(KeyboardLayout.COLEMAK)}
             />
           </div>
-          <div className="text-right shrink-0 grow">
+          <div className="text-right shrink-0">
             <button
               tabIndex={-1}
               className="outline-none"
               onClick={() => setShowHints((prev) => !prev)}
               onKeyUp={(e) => e.preventDefault()}
+              aria-label={showHints ? "Hide key hints" : "Show key hints"}
+              aria-pressed={showHints}
             >
               <LightBulb lit={showHints} />
             </button>
@@ -318,7 +320,7 @@ const App = () => {
             handleNewLine={handleNewLine}
           />
         </div>
-        <div className="w-full flex justify-center mb-12">
+        <div className="keyboard-frame w-full flex justify-center mb-8 sm:mb-10 md:mb-12">
           <Keyboard
             pressedKeys={pressedKeys}
             keyMap={keyMap}
@@ -326,20 +328,9 @@ const App = () => {
           />
         </div>
 
-        <div className="text-gray-400 dark:text-gray-600 grow flex flex-col items-start justify-end gap-2 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
-          <p className="text-left">
-            Learning Chinese too? Try{" "}
-            <a
-              href="https://typechinese.io/"
-              target="_blank"
-              className="underline"
-            >
-              TypeChinese
-            </a>{" "}
-            for Chinese typing practice.
-          </p>
-          <p className="text-left lg:text-right">
-            Designed & Built by{" "}
+        <div className="text-sm sm:text-base text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
+          <p>
+            Made by{" "}
             <a
               href="https://experimental.software/"
               target="_blank"
