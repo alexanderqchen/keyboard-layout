@@ -12,9 +12,9 @@ const SplitKey = ({
   highlightTop,
 }: SplitKeyProps) => {
   return (
-    <div className="shrink-0 grow-0 size-16">
+    <div className="keyboard-split-key shrink-0 grow-0">
       <div
-        className={`h-1/2 flex items-center justify-center text-xs border-black dark:border-gray-500 ${
+        className={`h-1/2 flex items-center justify-center border-black dark:border-gray-500 ${
           highlightTop
             ? "bg-slate-600 dark:bg-gray-500 text-white dark:text-black"
             : "border-2"
@@ -25,7 +25,7 @@ const SplitKey = ({
         {TopIcon && <TopIcon />}
       </div>
       <div
-        className={`h-1/2 flex items-center justify-center text-xs border-black dark:border-gray-500 ${
+        className={`h-1/2 flex items-center justify-center border-black dark:border-gray-500 ${
           highlightBottom
             ? "bg-slate-600 dark:bg-gray-500 text-white dark:text-black"
             : "border-2"

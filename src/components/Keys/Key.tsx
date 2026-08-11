@@ -9,7 +9,7 @@ type KeyProps = {
 const Key = ({ text, shiftText, highlight, bump, hint }: KeyProps) => {
   return (
     <div
-      className={`shrink-0 grow-0 size-16 rounded-md p-2 flex items-center justify-center text-xl leading-relaxed border-black dark:border-gray-500 ${
+      className={`keyboard-key shrink-0 grow-0 flex items-center justify-center leading-relaxed border-black dark:border-gray-500 ${
         highlight
           ? "bg-slate-600 dark:bg-gray-500 text-white dark:text-black border-0"
           : hint
@@ -18,7 +18,7 @@ const Key = ({ text, shiftText, highlight, bump, hint }: KeyProps) => {
       } `}
     >
       {shiftText ? (
-        <div className="text-sm">
+        <div className="keyboard-key-shift-text">
           <p>{shiftText}</p>
           <p>{text}</p>
         </div>

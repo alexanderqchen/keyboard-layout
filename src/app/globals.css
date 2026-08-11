@@ -19,6 +19,80 @@ body {
   background: rgb(var(--background-rgb));
 }
 
+.keyboard-frame {
+  container-type: inline-size;
+}
+
+.keyboard {
+  --keyboard-key-size: 6.2015504cqw;
+  --keyboard-gap: 0.7751938cqw;
+  --keyboard-padding: 0.7751938cqw;
+  --keyboard-radius: 0.5813953cqw;
+  --keyboard-text: 1.9379845cqw;
+  --keyboard-shift-text: 1.3565891cqw;
+  --keyboard-special-text: 1.2403101cqw;
+  --keyboard-arrow-text: 1.1627907cqw;
+
+  gap: var(--keyboard-gap);
+  width: 100cqw;
+}
+
+.keyboard-row {
+  gap: var(--keyboard-gap);
+}
+
+.keyboard-key,
+.keyboard-special-key,
+.keyboard-split-key {
+  height: var(--keyboard-key-size);
+}
+
+.keyboard-key,
+.keyboard-split-key,
+.keyboard-special-key--standard {
+  width: var(--keyboard-key-size);
+}
+
+.keyboard-key {
+  border-radius: var(--keyboard-radius);
+  font-size: var(--keyboard-text);
+  padding: var(--keyboard-padding);
+}
+
+.keyboard-key-shift-text {
+  font-size: var(--keyboard-shift-text);
+}
+
+.keyboard-special-key {
+  border-radius: var(--keyboard-radius);
+  font-size: var(--keyboard-special-text);
+  padding: var(--keyboard-padding);
+}
+
+.keyboard-special-key--wide {
+  width: 9.3023256cqw;
+}
+
+.keyboard-special-key--extraWide {
+  width: 11.2403101cqw;
+}
+
+.keyboard-special-key--shift {
+  width: 14.7286822cqw;
+}
+
+.keyboard-special-key--command {
+  width: 7.751938cqw;
+}
+
+.keyboard-special-key--space {
+  width: 34.1085271cqw;
+}
+
+.keyboard-split-key {
+  font-size: var(--keyboard-arrow-text);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

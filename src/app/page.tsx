@@ -312,7 +312,7 @@ const App = () => {
             handleNewLine={handleNewLine}
           />
         </div>
-        <div className="w-full flex justify-center mb-12">
+        <div className="keyboard-frame w-full flex justify-center mb-12">
           <Keyboard
             pressedKeys={pressedKeys}
             keyMap={keyMap}
@@ -320,19 +320,8 @@ const App = () => {
           />
         </div>
 
-        <div className="text-gray-400 dark:text-gray-600 grow flex flex-col items-start justify-end gap-2 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
-          <p className="text-left">
-            Learning Chinese too? Try{" "}
-            <a
-              href="https://typechinese.io/"
-              target="_blank"
-              className="underline"
-            >
-              TypeChinese
-            </a>{" "}
-            for Chinese typing practice.
-          </p>
-          <p className="text-left lg:text-right">
+        <div className="text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
+          <p>
             Designed & Built by{" "}
             <a
               href="https://experimental.software/"

@@ -11,7 +11,7 @@ type SpecialKeyProps = {
   position?: TextPosition;
   highlight?: boolean;
   hint?: boolean;
-  width?: string;
+  size?: "wide" | "extraWide" | "shift" | "command" | "space";
 };
 
 const SpecialKey = ({
@@ -20,13 +20,13 @@ const SpecialKey = ({
   position,
   highlight,
   hint,
-  width,
+  size,
 }: SpecialKeyProps) => {
   return (
     <div
-      className={`shrink-0 grow-0 rounded-md p-2 h-16 ${
-        width ? width : "w-16"
-      } ${
+      className={`keyboard-special-key keyboard-special-key--${
+        size || "standard"
+      } shrink-0 grow-0 ${
         highlight
           ? "bg-slate-600 dark:bg-gray-500 text-white dark:text-black border-0"
           : hint
@@ -35,14 +35,14 @@ const SpecialKey = ({
       }`}
     >
       <div
-        className={`h-1/2 flex items-start text-[0.8rem]  ${
+        className={`h-1/2 flex items-start ${
           position === TextPosition.RIGHT ? "" : "justify-end"
         }`}
       >
         {Icon ? <Icon /> : ""}
       </div>
       <div
-        className={`h-1/2 flex items-end text-[0.8rem]  ${
+        className={`h-1/2 flex items-end ${
           position === TextPosition.RIGHT ? "justify-end" : ""
         }`}
       >
