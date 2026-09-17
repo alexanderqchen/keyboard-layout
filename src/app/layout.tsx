@@ -41,7 +41,7 @@ export default function RootLayout({
                   "url": SITE_URL.href,
                   "applicationCategory": "EducationalApplication",
                   "operatingSystem": "Any",
-                  "browserRequirements": "Requires JavaScript and a physical keyboard for typing practice",
+                  "browserRequirements": "Requires JavaScript. Supports physical keyboards and on-screen touch typing.",
                   "isAccessibleForFree": true,
                   "description": "An online keyboard layout simulator for trying QWERTY, Dvorak and Colemak."
                 }
