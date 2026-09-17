@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { initializeAnalytics } from "@/lib/analytics";
+import { usePathname } from "next/navigation";
+import { trackPageview } from "@/lib/analytics";
 
 export default function Analytics() {
-  useEffect(() => { initializeAnalytics(); }, []);
+  const pathname = usePathname();
+  useEffect(() => { trackPageview(); }, [pathname]);
   return null;
 }

@@ -2,13 +2,15 @@ import type { PostHogConfig } from "posthog-js";
 import type { AnalyticsEvents, TrackEvent } from "./analytics-events";
 import { cleanAnalyticsUrl, getAnalyticsContext } from "./analytics-policy";
 import { isProductionHost } from "./site";
+import { layoutForPathname, layouts } from "./layouts";
 
 const POSTHOG_KEY = "phc_gZCfyVO7HQTKkDH5G4UH15ejDCJlCHDgbf1XSbZbWGw";
 const GA_ID = "G-3XWS80C1HX";
 let client: Parameters<PostHogConfig["loaded"]>[0] | undefined;
 let initialized = false;
 let context: ReturnType<typeof getAnalyticsContext> | undefined;
-const pending: Array<{ event: keyof AnalyticsEvents; properties: AnalyticsEvents[keyof AnalyticsEvents] }> = [];
+let lastPageUrl: string | undefined;
+const pending: Array<{ event: keyof AnalyticsEvents | "$pageview"; properties: Record<string, unknown> }> = [];
 
 function browserContext() {
   if (!context) {
@@ -78,7 +80,6 @@ export function initializeAnalytics() {
       loaded: (loadedClient) => {
         client = loadedClient;
         loadedClient.register(baseProperties());
-        loadedClient.capture("$pageview");
         for (const item of pending.splice(0)) loadedClient.capture(item.event, item.properties);
       },
     });
@@ -86,6 +87,34 @@ export function initializeAnalytics() {
     pending.length = 0;
     // Analytics failures must not break typing or outbound links.
   });
+}
+
+export function trackPageview() {
+  if (typeof window === "undefined") return;
+  try {
+    initializeAnalytics();
+    const url = new URL(window.location.href);
+    const cleanUrl = cleanAnalyticsUrl(url);
+    if (lastPageUrl === cleanUrl) return;
+    lastPageUrl = cleanUrl;
+    // Keep each queued view tied to its actual route, even if the SDK loads later.
+    const properties = {
+      $current_url: cleanUrl,
+      $pathname: url.pathname,
+      $host: url.hostname,
+      $title: layouts[layoutForPathname(url.pathname)].title,
+      layout: layoutForPathname(url.pathname),
+      ...baseProperties(),
+    };
+    if (browserContext().debug) {
+      console.info("[keyboard-analytics]", JSON.stringify({ event: "$pageview", properties }));
+    }
+    if (!isProductionHost(url.hostname, process.env.NODE_ENV)) return;
+    if (client) client.capture("$pageview", properties);
+    else if (pending.length < 50) pending.push({ event: "$pageview", properties });
+  } catch {
+    // A route must remain usable if analytics cannot initialize.
+  }
 }
 
 export const track: TrackEvent = (event, properties) => {

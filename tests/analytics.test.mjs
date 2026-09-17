@@ -47,6 +47,20 @@ test("reselecting a layout preserves a run; changing layout starts a fresh one",
   assert.deepEqual(events[1].properties, { layout: "colemak", practice_id: "practice-2", active_seconds: 0, character_count: 1 });
 });
 
+test("opening a shared layout starts practice in that layout without a selection event", () => {
+  const events = [];
+  const tracker = createPracticeTracker("dvorak", (event, properties) => events.push({ event, properties }), () => "shared-dvorak");
+  tracker.input(0);
+  tracker.selectLayout("dvorak");
+  tracker.input(1_000);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].event, "practice_started");
+  assert.equal(events[0].properties.layout, "dvorak");
+  tracker.selectLayout("colemak");
+  tracker.input(2_000);
+  assert.equal(events[1].properties.layout, "colemak");
+});
+
 test("thirty minutes without input starts a new practice run", () => {
   const { tracker, events } = fixture();
   tracker.input(0);
