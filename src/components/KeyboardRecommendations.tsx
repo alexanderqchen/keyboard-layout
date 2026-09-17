@@ -5,6 +5,8 @@ import Image, { type StaticImageData } from "next/image";
 import v1Image from "@/assets/recommendations/v1-ultra.jpg";
 import k3Image from "@/assets/recommendations/k3-ultra.jpg";
 import q11Image from "@/assets/recommendations/q11-ultra.jpg";
+import { track } from "@/lib/analytics";
+import type { LayoutName } from "@/lib/analytics-events";
 
 type KeyboardRecommendation = {
   id: string;
@@ -47,7 +49,7 @@ const keyboards: KeyboardRecommendation[] = [
   },
 ];
 
-export default function KeyboardRecommendations() {
+export default function KeyboardRecommendations({ layout }: { layout: LayoutName }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -56,7 +58,10 @@ export default function KeyboardRecommendations() {
         type="button"
         aria-expanded={isOpen}
         aria-controls="keyboard-recommendation-offers"
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => {
+          if (!isOpen) track("recommendations_opened", { layout, placement: "below_tester" });
+          setIsOpen(!isOpen);
+        }}
         className="inline-flex items-center gap-2 rounded-sm py-2 text-sm text-gray-500 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gray-500 dark:text-gray-400 dark:hover:text-gray-200"
       >
         Keyboard recommendations
@@ -80,6 +85,14 @@ export default function KeyboardRecommendations() {
               rel="sponsored noopener noreferrer"
               aria-label={`View ${keyboard.name} at Keychron (opens in a new tab)`}
               data-keyboard-recommendation={keyboard.id}
+              onClick={() => track("affiliate_link_clicked", {
+                layout, product_id: keyboard.id, merchant: "keychron", placement: "below_tester",
+              })}
+              onAuxClick={(event) => {
+                if (event.button === 1) track("affiliate_link_clicked", {
+                  layout, product_id: keyboard.id, merchant: "keychron", placement: "below_tester",
+                });
+              }}
               className="group flex flex-col rounded-xl border border-gray-200 p-4 transition-colors hover:border-gray-400 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-600 motion-reduce:transition-none dark:border-gray-800 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
             >
               <div className="mb-3 min-h-5 text-xs">
