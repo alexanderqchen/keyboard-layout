@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import Keyboard from "@/components/Keyboard";
 import KeyboardOption from "@/components/KeyboardOption";
+import KeyboardRecommendations from "@/components/KeyboardRecommendations";
 import TypeTest from "@/components/TypeTest";
 import qwertyKeyMap from "@/keyboards/qwertyKeyMap";
 import dvorakKeyMap from "@/keyboards/dvorakKeyMap";
@@ -197,7 +198,7 @@ const App = () => {
         }
       });
     } else {
-      if (meta) {
+      if (meta || !keyMap[code]) {
         // If performing a command, ignore the typed letter
         return;
       }
@@ -225,6 +226,13 @@ const App = () => {
 
   // KeyboardEvent Handlers
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    if ((event.target as HTMLElement).closest("a, button, input, textarea, select")) {
+      return;
+    }
+    // The recommendations make the page scrollable; spaces belong to the test.
+    if (event.code === "Space" || event.code === "Backspace") {
+      event.preventDefault();
+    }
     if (event.code === "ShiftLeft") {
       setShiftLeft(true);
     }
@@ -268,69 +276,74 @@ const App = () => {
   return (
     <div>
       <MobileBanner />
-      <div
-        ref={appRef}
-        className="w-full min-h-screen max-w-6xl mx-auto px-4 pt-8 pb-6 sm:px-8 sm:pt-12 sm:pb-8 md:px-12 md:pt-20 md:pb-12 outline-none flex flex-col"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        onBlur={() => resetKeys()}
-      >
-        <div className="mb-4 flex items-start gap-3 sm:gap-6 md:gap-8">
-          <div className="flex min-w-0 flex-1 gap-2 mb-4 sm:gap-4">
-            <KeyboardOption
-              name="QWERTY"
-              description="The standard format. Designed to minimize typewriter jams."
-              highlight={keyboardLayout === KeyboardLayout.QWERTY}
-              onClick={() => setKeyboardLayout(KeyboardLayout.QWERTY)}
-            />
-            <KeyboardOption
-              name="Dvorak"
-              description="Designed for a fast and ergonomic typing experience."
-              highlight={keyboardLayout === KeyboardLayout.DVORAK}
-              onClick={() => setKeyboardLayout(KeyboardLayout.DVORAK)}
-            />
-            <KeyboardOption
-              name="Colemak"
-              description="Resembles QWERTY while being more efficient and comfortable."
-              highlight={keyboardLayout === KeyboardLayout.COLEMAK}
-              onClick={() => setKeyboardLayout(KeyboardLayout.COLEMAK)}
+      <main className="w-full min-h-screen max-w-6xl mx-auto px-4 pt-8 pb-6 sm:px-8 sm:pt-12 sm:pb-8 md:px-12 md:pt-20 md:pb-12 flex flex-col">
+        <div
+          ref={appRef}
+          className="outline-none flex flex-col"
+          aria-label="Keyboard layout typing tester"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
+          onBlur={() => resetKeys()}
+        >
+          <div className="mb-4 flex items-start gap-3 sm:gap-6 md:gap-8">
+            <div className="flex min-w-0 flex-1 gap-2 mb-4 sm:gap-4">
+              <KeyboardOption
+                name="QWERTY"
+                description="The standard format. Designed to minimize typewriter jams."
+                highlight={keyboardLayout === KeyboardLayout.QWERTY}
+                onClick={() => setKeyboardLayout(KeyboardLayout.QWERTY)}
+              />
+              <KeyboardOption
+                name="Dvorak"
+                description="Designed for a fast and ergonomic typing experience."
+                highlight={keyboardLayout === KeyboardLayout.DVORAK}
+                onClick={() => setKeyboardLayout(KeyboardLayout.DVORAK)}
+              />
+              <KeyboardOption
+                name="Colemak"
+                description="Resembles QWERTY while being more efficient and comfortable."
+                highlight={keyboardLayout === KeyboardLayout.COLEMAK}
+                onClick={() => setKeyboardLayout(KeyboardLayout.COLEMAK)}
+              />
+            </div>
+            <div className="text-right shrink-0">
+              <button
+                tabIndex={-1}
+                className="outline-none"
+                onClick={() => setShowHints((prev) => !prev)}
+                onKeyUp={(e) => e.preventDefault()}
+                aria-label={showHints ? "Hide key hints" : "Show key hints"}
+                aria-pressed={showHints}
+              >
+                <LightBulb lit={showHints} />
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <TypeTest
+              finishedText={typeTestState.finishedText}
+              correctText={correctText}
+              incorrectText={incorrectText}
+              restText={restText}
+              handleNewLine={handleNewLine}
             />
           </div>
-          <div className="text-right shrink-0">
-            <button
-              tabIndex={-1}
-              className="outline-none"
-              onClick={() => setShowHints((prev) => !prev)}
-              onKeyUp={(e) => e.preventDefault()}
-              aria-label={showHints ? "Hide key hints" : "Show key hints"}
-              aria-pressed={showHints}
-            >
-              <LightBulb lit={showHints} />
-            </button>
+          <div className="keyboard-frame w-full flex justify-center mb-8 sm:mb-10 md:mb-12">
+            <Keyboard
+              pressedKeys={pressedKeys}
+              keyMap={keyMap}
+              hintKey={getHintKey()}
+            />
           </div>
         </div>
 
-        <div className="mb-4">
-          <TypeTest
-            finishedText={typeTestState.finishedText}
-            correctText={correctText}
-            incorrectText={incorrectText}
-            restText={restText}
-            handleNewLine={handleNewLine}
-          />
-        </div>
-        <div className="keyboard-frame w-full flex justify-center mb-8 sm:mb-10 md:mb-12">
-          <Keyboard
-            pressedKeys={pressedKeys}
-            keyMap={keyMap}
-            hintKey={getHintKey()}
-          />
-        </div>
+        <KeyboardRecommendations />
 
-        <div className="text-sm sm:text-base text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
+        <div className="mt-8 text-sm sm:text-base text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
           <p>
-            Made by{" "}
+            A product by{" "}
             <a
               href="https://experimental.software/"
               target="_blank"
@@ -340,7 +353,7 @@ const App = () => {
             </a>
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
