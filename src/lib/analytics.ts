@@ -3,6 +3,7 @@ import type { AnalyticsEvents, TrackEvent } from "./analytics-events";
 import { cleanAnalyticsUrl, getAnalyticsContext } from "./analytics-policy";
 import { isProductionHost } from "./site";
 import { layoutForPathname, layouts } from "./layouts";
+import { articles, guidesIndex } from "@/content/catalog";
 
 const POSTHOG_KEY = "phc_gZCfyVO7HQTKkDH5G4UH15ejDCJlCHDgbf1XSbZbWGw";
 const GA_ID = "G-3XWS80C1HX";
@@ -97,13 +98,18 @@ export function trackPageview() {
     const cleanUrl = cleanAnalyticsUrl(url);
     if (lastPageUrl === cleanUrl) return;
     lastPageUrl = cleanUrl;
+    const isTester = Object.values(layouts).some(layout => layout.path === url.pathname);
+    const article = Object.values(articles).find(article => article.path === url.pathname);
+    const pageTitle = isTester ? layouts[layoutForPathname(url.pathname)].title
+      : article?.title ?? (url.pathname === guidesIndex.path ? guidesIndex.title : document.title);
     // Keep each queued view tied to its actual route, even if the SDK loads later.
     const properties = {
       $current_url: cleanUrl,
       $pathname: url.pathname,
       $host: url.hostname,
-      $title: layouts[layoutForPathname(url.pathname)].title,
-      layout: layoutForPathname(url.pathname),
+      $title: pageTitle,
+      ...(isTester ? { layout: layoutForPathname(url.pathname), page_type: "simulator" }
+        : { page_type: article ? "article" : url.pathname === guidesIndex.path ? "guides" : "other" }),
       ...baseProperties(),
     };
     if (browserContext().debug) {
