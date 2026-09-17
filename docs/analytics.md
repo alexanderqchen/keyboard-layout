@@ -39,4 +39,4 @@ Keep separate session funnels for pageview → practice started → practice eng
 
 New event metrics begin with this release; earlier pageviews cannot reconstruct practice or affiliate events. Compare small samples descriptively. Merchant commissions and payments remain separate from PostHog metrics.
 
-For a future domain migration, set `NEXT_PUBLIC_SITE_URL` to the new canonical HTTPS URL and rebuild. Keep the analytics project and event names. Update dashboard hostname filters, redirects and search-engine configuration as part of the migration.
+The canonical production URL is `https://keyboardlayout.app/`. Metadata, sitemap and analytics use `src/lib/site.ts`; `NEXT_PUBLIC_SITE_URL` can override it at build time. Vercel redirects the legacy `keyboard.experimental.software` hostname and `www.keyboardlayout.app` permanently to the canonical domain. Keep those redirects for at least one year, preferably indefinitely. The analytics project and event names remain unchanged, and dashboard hostname filters include both the legacy and current domains to preserve historical reporting.
