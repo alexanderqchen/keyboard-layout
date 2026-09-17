@@ -1,4 +1,5 @@
-export type LayoutName = "qwerty" | "dvorak" | "colemak";
+import type { LayoutName } from "./layouts";
+export type { LayoutName } from "./layouts";
 
 export type PracticeProperties = {
   layout: LayoutName;

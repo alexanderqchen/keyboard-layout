@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import Keyboard from "@/components/Keyboard";
 import KeyboardOption from "@/components/KeyboardOption";
@@ -12,50 +13,40 @@ import colemakKeyMap from "@/keyboards/colemakKeyMap";
 import { words } from "@/words";
 import LightBulb from "@/components/Icons/LightBulb";
 import { track } from "@/lib/analytics";
-import type { LayoutName } from "@/lib/analytics-events";
+import { layouts, layoutForPathname, type LayoutName } from "@/lib/layouts";
 import { createPracticeTracker, isPracticeInput } from "@/lib/practice-analytics";
 
 const MobileBanner = dynamic(() => import("@/components/MobileBanner"), {
   ssr: false,
 });
 
-enum KeyboardLayout {
-  QWERTY,
-  DVORAK,
-  COLEMAK,
-}
-
 const KeyMap = {
-  [KeyboardLayout.QWERTY]: qwertyKeyMap,
-  [KeyboardLayout.DVORAK]: dvorakKeyMap,
-  [KeyboardLayout.COLEMAK]: colemakKeyMap,
+  qwerty: qwertyKeyMap,
+  dvorak: dvorakKeyMap,
+  colemak: colemakKeyMap,
 };
 
-const layoutNames: Record<KeyboardLayout, LayoutName> = {
-  [KeyboardLayout.QWERTY]: "qwerty",
-  [KeyboardLayout.DVORAK]: "dvorak",
-  [KeyboardLayout.COLEMAK]: "colemak",
-};
-
-const App = () => {
+const KeyboardTester = ({ children }: { children: ReactNode }) => {
   const appRef = useRef<HTMLDivElement>(null);
 
-  // Keyboard configuration
-  const [keyboardLayout, setKeyboardLayout] = useState(KeyboardLayout.QWERTY);
+  // The shared route layout keeps typing state and hints mounted during navigation.
+  const keyboardLayout = layoutForPathname(usePathname());
+  const selectedLayout = layouts[keyboardLayout];
   const keyMap = KeyMap[keyboardLayout] as any;
+  const previousLayout = useRef(keyboardLayout);
   const practice = useRef<ReturnType<typeof createPracticeTracker> | null>(null);
   if (!practice.current) {
-    practice.current = createPracticeTracker("qwerty", track, () => crypto.randomUUID());
+    practice.current = createPracticeTracker(keyboardLayout, track, () => crypto.randomUUID());
   }
 
-  const selectLayout = (next: KeyboardLayout) => {
-    if (next !== keyboardLayout) {
-      track("layout_selected", { layout: layoutNames[next], previous_layout: layoutNames[keyboardLayout] });
-      practice.current?.selectLayout(layoutNames[next]);
-      setKeyboardLayout(next);
+  useEffect(() => {
+    if (previousLayout.current !== keyboardLayout) {
+      track("layout_selected", { layout: keyboardLayout, previous_layout: previousLayout.current });
+      practice.current?.selectLayout(keyboardLayout);
+      previousLayout.current = keyboardLayout;
     }
-    appRef.current?.focus();
-  };
+    appRef.current?.focus({ preventScroll: true });
+  }, [keyboardLayout]);
 
   // Keys that are currently pressed down. For visual keyboard
   const [pressedKeys, setPressedKeys] = useState(new Set<string>());
@@ -140,7 +131,7 @@ const App = () => {
     setTypeTestState({
       finishedText: "",
       typedText: "",
-      unfinishedText: words.sort(() => 0.5 - Math.random()).join(" "),
+      unfinishedText: [...words].sort(() => 0.5 - Math.random()).join(" "),
     });
   }, []);
 
@@ -154,7 +145,7 @@ const App = () => {
         unfinishedText:
           prev.unfinishedText +
           " " +
-          words.sort(() => 0.5 - Math.random()).join(" "),
+          [...words].sort(() => 0.5 - Math.random()).join(" "),
       }));
     }
   }, [typeTestState]);
@@ -316,45 +307,46 @@ const App = () => {
   return (
     <div>
       <MobileBanner />
-      <main className="w-full min-h-screen max-w-6xl mx-auto px-4 pt-8 pb-6 sm:px-8 sm:pt-12 sm:pb-8 md:px-12 md:pt-20 md:pb-12 flex flex-col">
+      <main className="w-full min-h-screen max-w-6xl mx-auto px-4 pt-6 pb-6 sm:px-8 sm:pt-8 sm:pb-8 md:px-12 md:pt-10 md:pb-12 flex flex-col">
+        <header className="mb-5 sm:mb-6">
+          <h1 className="text-base font-medium tracking-tight text-gray-900 sm:text-lg dark:text-gray-200">
+            {selectedLayout.heading}
+          </h1>
+          <p id="typing-instructions" className="mt-1 text-xs leading-relaxed text-gray-500 sm:text-sm dark:text-gray-400">
+            {selectedLayout.introduction}
+          </p>
+        </header>
         <div
           ref={appRef}
           className="outline-none flex flex-col"
           aria-label="Keyboard layout typing tester"
+          aria-describedby="typing-instructions"
           tabIndex={0}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onBlur={() => { resetKeys(); practice.current?.pause(); }}
         >
           <div className="mb-4 flex items-start gap-3 sm:gap-6 md:gap-8">
-            <div className="flex min-w-0 flex-1 gap-2 mb-4 sm:gap-4">
-              <KeyboardOption
-                name="QWERTY"
-                description="The standard format. Designed to minimize typewriter jams."
-                highlight={keyboardLayout === KeyboardLayout.QWERTY}
-                onClick={() => selectLayout(KeyboardLayout.QWERTY)}
-              />
-              <KeyboardOption
-                name="Dvorak"
-                description="Designed for a fast and ergonomic typing experience."
-                highlight={keyboardLayout === KeyboardLayout.DVORAK}
-                onClick={() => selectLayout(KeyboardLayout.DVORAK)}
-              />
-              <KeyboardOption
-                name="Colemak"
-                description="Resembles QWERTY while being more efficient and comfortable."
-                highlight={keyboardLayout === KeyboardLayout.COLEMAK}
-                onClick={() => selectLayout(KeyboardLayout.COLEMAK)}
-              />
-            </div>
+            <nav aria-label="Keyboard layouts" className="flex min-w-0 flex-1 gap-2 mb-4 sm:gap-4">
+              {(Object.keys(layouts) as LayoutName[]).map((name) => (
+                <KeyboardOption
+                  key={name}
+                  name={layouts[name].name}
+                  description={layouts[name].summary}
+                  href={layouts[name].path}
+                  highlight={keyboardLayout === name}
+                  onSelect={() => appRef.current?.focus({ preventScroll: true })}
+                />
+              ))}
+            </nav>
             <div className="text-right shrink-0">
               <button
-                tabIndex={-1}
-                className="outline-none"
+                type="button"
+                className="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gray-500"
                 onClick={() => {
                   const enabled = !showHints;
                   setShowHints(enabled);
-                  track("hints_toggled", { layout: layoutNames[keyboardLayout], enabled });
+                  track("hints_toggled", { layout: keyboardLayout, enabled });
                   appRef.current?.focus();
                 }}
                 onKeyUp={(e) => e.preventDefault()}
@@ -384,7 +376,9 @@ const App = () => {
           </div>
         </div>
 
-        <KeyboardRecommendations layout={layoutNames[keyboardLayout]} />
+        <KeyboardRecommendations layout={keyboardLayout} />
+
+        {children}
 
         <div className="mt-8 text-sm sm:text-base text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
           <p>
@@ -403,4 +397,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default KeyboardTester;
