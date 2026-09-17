@@ -4,6 +4,14 @@ export const ENGAGED_MS = 30_000;
 export const MAX_TYPING_GAP_MS = 5_000;
 export const NEW_PRACTICE_AFTER_MS = 30 * 60_000;
 
+export function createPracticeId(random: Pick<Crypto, "getRandomValues"> & Partial<Pick<Crypto, "randomUUID">> = crypto) {
+  // LAN previews on a phone use HTTP, where randomUUID is unavailable.
+  return random.randomUUID?.() ?? Array.from(
+    random.getRandomValues(new Uint8Array(16)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
 // Only timing and counts enter this tracker. Keys and typed text never do.
 export function createPracticeTracker(
   initialLayout: LayoutName,

@@ -19,7 +19,7 @@ const content: ArticleContent = {
     { id: "first-session", title: "Your first session: find the home row", body: <>
       <p>On a conventional keyboard, find the raised marks on the physical F and J keys. Those positions become <strong>U and H</strong> in Dvorak. Rest your left fingers on A, O, E, U and your right fingers on H, T, N, S, with a thumb available for the spacebar. The index fingers also reach inward to I and D.</p>
       <ol>
-        <li>Open <Link href="/dvorak">Try Dvorak</Link> on a computer with a physical keyboard.</li>
+        <li>Open <Link href="/dvorak">Try Dvorak</Link>. Use your physical keyboard, or tap the on-screen keys on a phone or tablet to explore the layout.</li>
         <li>Turn on the lightbulb button for key hints. It highlights the position of the next character in the practice text.</li>
         <li>Read the next letter, locate it in the diagram, and press that position. Try to look at the screen rather than your QWERTY labels.</li>
         <li>Use Backspace to correct an error. Slow down enough to choose the next key deliberately.</li>

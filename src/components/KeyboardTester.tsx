@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import Keyboard from "@/components/Keyboard";
+import TouchKeyboard from "@/components/TouchKeyboard";
 import KeyboardOption from "@/components/KeyboardOption";
 import KeyboardRecommendations from "@/components/KeyboardRecommendations";
 import TypeTest from "@/components/TypeTest";
@@ -15,11 +15,8 @@ import { words } from "@/words";
 import LightBulb from "@/components/Icons/LightBulb";
 import { track } from "@/lib/analytics";
 import { layouts, layoutForPathname, type LayoutName } from "@/lib/layouts";
-import { createPracticeTracker, isPracticeInput } from "@/lib/practice-analytics";
-
-const MobileBanner = dynamic(() => import("@/components/MobileBanner"), {
-  ssr: false,
-});
+import { createPracticeId, createPracticeTracker, isPracticeInput } from "@/lib/practice-analytics";
+import { applyTypingKey, type TypingKeyMap } from "@/lib/typing-state";
 
 const KeyMap = {
   qwerty: qwertyKeyMap,
@@ -29,15 +26,30 @@ const KeyMap = {
 
 const KeyboardTester = ({ children }: { children: ReactNode }) => {
   const appRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const touchKeyboardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const keyboard = touchKeyboardRef.current;
+    if (!keyboard) return;
+    // Reserve the dock's actual height, including safe-area padding and text zoom.
+    const reserveKeyboardSpace = () => {
+      mainRef.current?.style.setProperty("--touch-keyboard-height", `${keyboard.getBoundingClientRect().height}px`);
+    };
+    reserveKeyboardSpace();
+    const observer = new ResizeObserver(reserveKeyboardSpace);
+    observer.observe(keyboard);
+    return () => observer.disconnect();
+  }, []);
 
   // The shared route layout keeps typing state and hints mounted during navigation.
   const keyboardLayout = layoutForPathname(usePathname());
   const selectedLayout = layouts[keyboardLayout];
-  const keyMap = KeyMap[keyboardLayout] as any;
+  const keyMap: TypingKeyMap = KeyMap[keyboardLayout];
   const previousLayout = useRef(keyboardLayout);
   const practice = useRef<ReturnType<typeof createPracticeTracker> | null>(null);
   if (!practice.current) {
-    practice.current = createPracticeTracker(keyboardLayout, track, () => crypto.randomUUID());
+    practice.current = createPracticeTracker(keyboardLayout, track, createPracticeId);
   }
 
   useEffect(() => {
@@ -52,28 +64,15 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
   // Keys that are currently pressed down. For visual keyboard
   const [pressedKeys, setPressedKeys] = useState(new Set<string>());
 
-  const [shiftLeft, setShiftLeft] = useState(false);
-  const [shiftRight, setShiftRight] = useState(false);
-  const shift = shiftLeft || shiftRight;
-
-  const [metaLeft, setMetaLeft] = useState(false);
-  const [metaRight, setMetaRight] = useState(false);
-  const meta = metaLeft || metaRight;
-
-  const resetKeys = () => {
-    setPressedKeys(new Set());
-    setShiftLeft(false);
-    setShiftRight(false);
-    setMetaLeft(false);
-    setMetaRight(false);
-  };
-
   // Store if should show hints
   const [showHints, setShowHints] = useState(false);
 
   useEffect(() => {
     appRef.current?.focus();
-    const pause = () => practice.current?.pause();
+    const pause = () => {
+      setPressedKeys(new Set());
+      practice.current?.pause();
+    };
     window.addEventListener("blur", pause);
     document.addEventListener("visibilitychange", pause);
     return () => {
@@ -151,124 +150,33 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
     }
   }, [typeTestState]);
 
-  const handleTypeTestKeyDown = (code: string) => {
-    if (code === "Backspace" && meta) {
-      // Special feature, remove all incorrect text on cmd + backspace
-      setTypeTestState((prev) => {
-        // Find the index of the first incorrect character in typedText
-        let incorrectIndex = 0;
-        while (
-          incorrectIndex < prev.typedText.length &&
-          incorrectIndex < prev.unfinishedText.length &&
-          prev.typedText[incorrectIndex] === prev.unfinishedText[incorrectIndex]
-        ) {
-          incorrectIndex++;
-        }
-
-        return {
-          ...prev,
-          typedText: prev.typedText.slice(0, incorrectIndex),
-        };
-      });
-
-      // When you cmd+key, the key stays down
-      // this is to artificially KeyUp the Backspace button
-      setPressedKeys((prev) => {
-        prev.delete("Backspace");
-        return new Set(prev);
-      });
-    } else if (code === "Backspace") {
-      // Remove 1 from typedText if applicable
-      setTypeTestState((prev) => {
-        if (prev.typedText.length === 0) {
-          return {
-            ...prev,
-          };
-        }
-
-        return {
-          ...prev,
-          typedText: prev.typedText.slice(0, prev.typedText.length - 1),
-        };
-      });
-    } else if (code === "Space") {
-      setTypeTestState((prev) => {
-        const nextUnfinishedWord = prev.unfinishedText.slice(
-          0,
-          prev.unfinishedText.indexOf(" ")
-        );
-
-        if (prev.typedText === nextUnfinishedWord) {
-          // Handle when a word is typed correctly by:
-          // 1. Remove word from unfinishedText
-          // 2. Add word to finishedText
-          // 3. Reset typedText
-          return {
-            finishedText: prev.finishedText + nextUnfinishedWord + " ",
-            typedText: "",
-            unfinishedText: prev.unfinishedText.slice(
-              prev.unfinishedText.indexOf(" ") + 1
-            ),
-          };
-        } else {
-          // If word is typed incorrectly, just add as usual
-          return {
-            ...prev,
-            typedText: prev.typedText + " ",
-          };
-        }
-      });
-    } else {
-      if (meta || !keyMap[code]) {
-        // If performing a command, ignore the typed letter
-        return;
-      }
-
-      // Handle normal case when letter is typed
-      const typedLetter =
-        (shift ? keyMap[code].shiftValue : keyMap[code].value) || "";
-
-      setTypeTestState((prev) => ({
-        ...prev,
-        typedText: prev.typedText + typedLetter,
-      }));
-    }
+  const handleTypingKey = (code: string, shifted: boolean, clearMistakes = false) => {
+    setTypeTestState((prev) => applyTypingKey(prev, code, keyMap, shifted, clearMistakes));
   };
 
   // Handle new line
-  const handleNewLine = () => {
-    setTypeTestState((prev) => {
-      return {
-        ...prev,
-        finishedText: "",
-      };
-    });
-  };
+  const handleNewLine = useCallback(() => {
+    setTypeTestState((prev) => prev.finishedText ? { ...prev, finishedText: "" } : prev);
+  }, []);
 
   // KeyboardEvent Handlers
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if ((event.target as HTMLElement).closest("a, button, input, textarea, select")) {
       return;
     }
-    // The recommendations make the page scrollable; spaces belong to the test.
-    if (event.code === "Space" || event.code === "Backspace") {
-      event.preventDefault();
-    }
-    if (event.code === "ShiftLeft") {
-      setShiftLeft(true);
-    }
-    if (event.code === "ShiftRight") {
-      setShiftRight(true);
-    }
-    if (event.code === "MetaLeft") {
-      setMetaLeft(true);
-    }
-    if (event.code === "MetaRight") {
-      setMetaRight(true);
-    }
-
     // Set highlighted key on visual keyboard
-    setPressedKeys((prev) => new Set(prev.add(event.code)));
+    setPressedKeys((prev) => new Set(prev).add(event.code));
+
+    if (event.code === "Backspace" && event.metaKey) {
+      event.preventDefault();
+      handleTypingKey(event.code, false, true);
+      setPressedKeys(new Set());
+      return;
+    }
+    if (event.metaKey || event.ctrlKey || event.altKey || event.nativeEvent.isComposing) return;
+
+    // Spaces belong to the practice text, not page scrolling.
+    if (event.code === "Space" || event.code === "Backspace") event.preventDefault();
 
     if (isPracticeInput({
       repeat: event.repeat,
@@ -281,40 +189,28 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
     })) {
       practice.current?.input(performance.now());
     }
-    handleTypeTestKeyDown(event.code);
+    handleTypingKey(event.code, event.shiftKey);
   };
 
   const handleKeyUp = (event: React.KeyboardEvent) => {
-    if (event.code === "ShiftLeft") {
-      setShiftLeft(false);
-    }
-    if (event.code === "ShiftRight") {
-      setShiftRight(false);
-    }
-    if (event.code === "MetaLeft") {
-      setMetaLeft(false);
-    }
-    if (event.code === "MetaRight") {
-      setMetaRight(false);
-    }
-
     // Unset highlighted key on visual keyboard
     setPressedKeys((prev) => {
-      prev.delete(event.code);
-      return new Set(prev);
+      const next = new Set(prev);
+      next.delete(event.code);
+      return next;
     });
   };
 
   return (
     <div>
-      <MobileBanner />
-      <main className="w-full min-h-screen max-w-6xl mx-auto px-4 pt-6 pb-6 sm:px-8 sm:pt-8 sm:pb-8 md:px-12 md:pt-10 md:pb-12 flex flex-col">
-        <header className="mb-5 sm:mb-6">
+      <main ref={mainRef} className="tester-main w-full min-h-[100svh] max-w-6xl mx-auto px-4 pt-6 pb-6 sm:px-8 sm:pt-8 sm:pb-8 md:px-12 md:pt-10 md:pb-12 flex flex-col">
+        <header className="tester-header mb-5 sm:mb-6">
           <h1 className="text-base font-medium tracking-tight text-gray-900 sm:text-lg dark:text-gray-200">
             {selectedLayout.heading}
           </h1>
           <p id="typing-instructions" className="mt-1 text-xs leading-relaxed text-gray-500 sm:text-sm dark:text-gray-400">
-            {selectedLayout.introduction}
+            <span className="physical-typing-instructions">{selectedLayout.introduction}</span>
+            <span className="touch-typing-instructions">Tap the keys below to try {selectedLayout.name}.</span>
           </p>
         </header>
         <div
@@ -325,10 +221,18 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
           tabIndex={0}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
-          onBlur={() => { resetKeys(); practice.current?.pause(); }}
+          onPointerDown={(event) => {
+            if (!(event.target as HTMLElement).closest("a, button")) appRef.current?.focus({ preventScroll: true });
+          }}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setPressedKeys(new Set());
+              practice.current?.pause();
+            }
+          }}
         >
-          <div className="mb-4 flex items-start gap-3 sm:gap-6 md:gap-8">
-            <nav aria-label="Keyboard layouts" className="flex min-w-0 flex-1 gap-2 mb-4 sm:gap-4">
+          <div className="tester-controls mb-5 flex items-start gap-3 sm:gap-6 md:gap-8">
+            <nav aria-label="Keyboard layouts" className="flex min-w-0 flex-1 gap-2 sm:gap-4">
               {(Object.keys(layouts) as LayoutName[]).map((name) => (
                 <KeyboardOption
                   key={name}
@@ -343,7 +247,7 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
             <div className="text-right shrink-0">
               <button
                 type="button"
-                className="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gray-500"
+                className="flex min-h-11 min-w-11 items-center justify-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gray-500"
                 onClick={() => {
                   const enabled = !showHints;
                   setShowHints(enabled);
@@ -359,7 +263,7 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
             </div>
           </div>
 
-          <div className="mb-4 ph-no-capture" data-private-typing>
+          <div className="practice-text mb-4 ph-no-capture" data-private-typing>
             <TypeTest
               finishedText={typeTestState.finishedText}
               correctText={correctText}
@@ -368,11 +272,25 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
               handleNewLine={handleNewLine}
             />
           </div>
-          <div className="keyboard-frame w-full flex justify-center mb-8 sm:mb-10 md:mb-12 ph-no-capture" data-private-typing>
+          <div className="physical-keyboard keyboard-frame w-full flex justify-center mb-8 sm:mb-10 md:mb-12 ph-no-capture" data-private-typing>
             <Keyboard
               pressedKeys={pressedKeys}
               keyMap={keyMap}
               hintKey={getHintKey()}
+            />
+          </div>
+          <div ref={touchKeyboardRef} className="touch-keyboard-frame ph-no-capture" data-private-typing>
+            <TouchKeyboard
+              key={keyboardLayout}
+              layoutName={selectedLayout.name}
+              keyMap={keyMap}
+              pressedKeys={pressedKeys}
+              hintKey={getHintKey()}
+              hintShift={showHints && !incorrectText && Object.values(keyMap).some((key) => key.shiftValue === restText[0] && key.value !== restText[0])}
+              onKey={(code, shifted) => {
+                if (code === "Space" || keyMap[code]?.value?.length === 1) practice.current?.input(performance.now());
+                handleTypingKey(code, shifted);
+              }}
             />
           </div>
         </div>

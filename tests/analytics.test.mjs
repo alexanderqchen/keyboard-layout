@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createPracticeTracker, isPracticeInput, NEW_PRACTICE_AFTER_MS } from "../src/lib/practice-analytics.ts";
+import { createPracticeId, createPracticeTracker, isPracticeInput, NEW_PRACTICE_AFTER_MS } from "../src/lib/practice-analytics.ts";
 import { getAnalyticsContext, cleanAnalyticsUrl, INTERNAL_STORAGE_KEY } from "../src/lib/analytics-policy.ts";
 import { isProductionHost, SITE_URL } from "../src/lib/site.ts";
 
@@ -10,6 +10,12 @@ function fixture() {
   const tracker = createPracticeTracker("qwerty", (event, properties) => events.push({ event, properties }), () => `practice-${++id}`);
   return { tracker, events };
 }
+
+test("practice IDs work on HTTPS and HTTP phone previews", () => {
+  const random = { getRandomValues: (bytes) => bytes.fill(42) };
+  assert.equal(createPracticeId(random), "2a".repeat(16));
+  assert.equal(createPracticeId({ ...random, randomUUID: () => "secure-uuid" }), "secure-uuid");
+});
 
 test("starts once and engages once only after thirty seconds of active input", () => {
   const { tracker, events } = fixture();
