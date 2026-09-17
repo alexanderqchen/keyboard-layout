@@ -11,6 +11,9 @@ import dvorakKeyMap from "@/keyboards/dvorakKeyMap";
 import colemakKeyMap from "@/keyboards/colemakKeyMap";
 import { words } from "@/words";
 import LightBulb from "@/components/Icons/LightBulb";
+import { track } from "@/lib/analytics";
+import type { LayoutName } from "@/lib/analytics-events";
+import { createPracticeTracker, isPracticeInput } from "@/lib/practice-analytics";
 
 const MobileBanner = dynamic(() => import("@/components/MobileBanner"), {
   ssr: false,
@@ -28,12 +31,31 @@ const KeyMap = {
   [KeyboardLayout.COLEMAK]: colemakKeyMap,
 };
 
+const layoutNames: Record<KeyboardLayout, LayoutName> = {
+  [KeyboardLayout.QWERTY]: "qwerty",
+  [KeyboardLayout.DVORAK]: "dvorak",
+  [KeyboardLayout.COLEMAK]: "colemak",
+};
+
 const App = () => {
   const appRef = useRef<HTMLDivElement>(null);
 
   // Keyboard configuration
   const [keyboardLayout, setKeyboardLayout] = useState(KeyboardLayout.QWERTY);
   const keyMap = KeyMap[keyboardLayout] as any;
+  const practice = useRef<ReturnType<typeof createPracticeTracker> | null>(null);
+  if (!practice.current) {
+    practice.current = createPracticeTracker("qwerty", track, () => crypto.randomUUID());
+  }
+
+  const selectLayout = (next: KeyboardLayout) => {
+    if (next !== keyboardLayout) {
+      track("layout_selected", { layout: layoutNames[next], previous_layout: layoutNames[keyboardLayout] });
+      practice.current?.selectLayout(layoutNames[next]);
+      setKeyboardLayout(next);
+    }
+    appRef.current?.focus();
+  };
 
   // Keys that are currently pressed down. For visual keyboard
   const [pressedKeys, setPressedKeys] = useState(new Set<string>());
@@ -59,6 +81,13 @@ const App = () => {
 
   useEffect(() => {
     appRef.current?.focus();
+    const pause = () => practice.current?.pause();
+    window.addEventListener("blur", pause);
+    document.addEventListener("visibilitychange", pause);
+    return () => {
+      window.removeEventListener("blur", pause);
+      document.removeEventListener("visibilitychange", pause);
+    };
   }, []);
 
   const getHintKey = () => {
@@ -249,6 +278,17 @@ const App = () => {
     // Set highlighted key on visual keyboard
     setPressedKeys((prev) => new Set(prev.add(event.code)));
 
+    if (isPracticeInput({
+      repeat: event.repeat,
+      metaKey: event.metaKey,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      isComposing: event.nativeEvent.isComposing,
+      code: event.code,
+      mappedValue: keyMap[event.code]?.value,
+    })) {
+      practice.current?.input(performance.now());
+    }
     handleTypeTestKeyDown(event.code);
   };
 
@@ -284,7 +324,7 @@ const App = () => {
           tabIndex={0}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
-          onBlur={() => resetKeys()}
+          onBlur={() => { resetKeys(); practice.current?.pause(); }}
         >
           <div className="mb-4 flex items-start gap-3 sm:gap-6 md:gap-8">
             <div className="flex min-w-0 flex-1 gap-2 mb-4 sm:gap-4">
@@ -292,26 +332,31 @@ const App = () => {
                 name="QWERTY"
                 description="The standard format. Designed to minimize typewriter jams."
                 highlight={keyboardLayout === KeyboardLayout.QWERTY}
-                onClick={() => setKeyboardLayout(KeyboardLayout.QWERTY)}
+                onClick={() => selectLayout(KeyboardLayout.QWERTY)}
               />
               <KeyboardOption
                 name="Dvorak"
                 description="Designed for a fast and ergonomic typing experience."
                 highlight={keyboardLayout === KeyboardLayout.DVORAK}
-                onClick={() => setKeyboardLayout(KeyboardLayout.DVORAK)}
+                onClick={() => selectLayout(KeyboardLayout.DVORAK)}
               />
               <KeyboardOption
                 name="Colemak"
                 description="Resembles QWERTY while being more efficient and comfortable."
                 highlight={keyboardLayout === KeyboardLayout.COLEMAK}
-                onClick={() => setKeyboardLayout(KeyboardLayout.COLEMAK)}
+                onClick={() => selectLayout(KeyboardLayout.COLEMAK)}
               />
             </div>
             <div className="text-right shrink-0">
               <button
                 tabIndex={-1}
                 className="outline-none"
-                onClick={() => setShowHints((prev) => !prev)}
+                onClick={() => {
+                  const enabled = !showHints;
+                  setShowHints(enabled);
+                  track("hints_toggled", { layout: layoutNames[keyboardLayout], enabled });
+                  appRef.current?.focus();
+                }}
                 onKeyUp={(e) => e.preventDefault()}
                 aria-label={showHints ? "Hide key hints" : "Show key hints"}
                 aria-pressed={showHints}
@@ -321,7 +366,7 @@ const App = () => {
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4 ph-no-capture" data-private-typing>
             <TypeTest
               finishedText={typeTestState.finishedText}
               correctText={correctText}
@@ -330,7 +375,7 @@ const App = () => {
               handleNewLine={handleNewLine}
             />
           </div>
-          <div className="keyboard-frame w-full flex justify-center mb-8 sm:mb-10 md:mb-12">
+          <div className="keyboard-frame w-full flex justify-center mb-8 sm:mb-10 md:mb-12 ph-no-capture" data-private-typing>
             <Keyboard
               pressedKeys={pressedKeys}
               keyMap={keyMap}
@@ -339,7 +384,7 @@ const App = () => {
           </div>
         </div>
 
-        <KeyboardRecommendations />
+        <KeyboardRecommendations layout={layoutNames[keyboardLayout]} />
 
         <div className="mt-8 text-sm sm:text-base text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
           <p>
