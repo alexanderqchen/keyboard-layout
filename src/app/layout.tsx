@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description:
     "Test Dvorak, Colemak, and QWERTY keyboard layouts side by side. Type on any layout instantly in your browser — no software to install. Switch layouts with one click and practice typing on real text.",
   metadataBase: SITE_URL,
+  alternates: { canonical: SITE_URL.href },
   applicationName: "Keyboard Layout Tester",
   other: {
     "google": "nositelinkssearchbox",
