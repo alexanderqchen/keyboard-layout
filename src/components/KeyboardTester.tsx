@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import Keyboard from "@/components/Keyboard";
 import KeyboardOption from "@/components/KeyboardOption";
@@ -381,16 +382,19 @@ const KeyboardTester = ({ children }: { children: ReactNode }) => {
         {children}
 
         <div className="mt-8 text-sm sm:text-base text-gray-400 dark:text-gray-600 text-right grow flex flex-col justify-end">
-          <p>
-            A product by{" "}
-            <a
-              href="https://experimental.software/"
-              target="_blank"
-              className="underline"
-            >
-              Experimental Software
-            </a>
-          </p>
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <Link href="/learn" className="underline underline-offset-4 hover:text-gray-600 dark:hover:text-gray-400">Guides</Link>
+            <p>
+              A product by{" "}
+              <a
+                href="https://experimental.software/"
+                target="_blank"
+                className="underline"
+              >
+                Experimental Software
+              </a>
+            </p>
+          </div>
         </div>
       </main>
     </div>
